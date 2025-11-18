@@ -1,5 +1,5 @@
 {
-  "name": "partisipan-03",
+  "name": "partisipan-01",
   "version": "1.0.0",
   "main": "problem_01.js",
   "directories": {
@@ -11,14 +11,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/VindSkiee/P-3.git"
+    "url": "git+https://github.com/VindSkiee/P-1.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/VindSkiee/P-3/issues"
+    "url": "https://github.com/VindSkiee/P-1/issues"
   },
-  "homepage": "https://github.com/VindSkiee/P-3#readme",
+  "homepage": "https://github.com/VindSkiee/P-1#readme",
   "description": ""
 }
