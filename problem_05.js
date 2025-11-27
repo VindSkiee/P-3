@@ -100,10 +100,14 @@ export class PengelolaInventaris {
   // initial state: produk berisi daftar produk
   // final state: memperbarui stok beberapa produk sekaligus
   perbaruiStokBanyak(pembaruan) {
-    for (let upd of pembaruan) {
-      const p = this.produk.find(pr => pr.id === upd.idProduk);
-      if (p) {
-        p.stokSekarang = upd.stokBaru;
+    for (let up of pembaruan) {
+      const prod = this.produk.find(pr => pr.id === up.idProduk);
+      if (up.stokBaru < 0) {
+        prod.stokSekarang = 0;
+        continue;
+      }
+      if (prod) {
+        prod.stokSekarang = up.stokBaru;
       }
     }
   }

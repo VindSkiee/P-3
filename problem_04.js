@@ -121,7 +121,7 @@ export class AnalisisKinerjaMahasiswa {
   }
 
   // initial state: setiap mahasiswa memiliki nilai untuk mata kuliah tertentu
-  // final state: mengembalikan statistik (rata-rata, median, modus, dan standar deviasi) untuk satu mata kuliah
+  // final state: mengembalikan statistik (mean, median, modus, dan standar deviasi) untuk satu mata kuliah
   dapatkanStatistikMataKuliah(kodeMataKuliah) {
     const nilai = this.daftarMahasiswa
       .map(m => m.nilai.get(kodeMataKuliah))
@@ -130,7 +130,7 @@ export class AnalisisKinerjaMahasiswa {
     if (nilai.length === 0) return null;
 
     return {
-      rataRata: mean(nilai),
+      mean: mean(nilai),
       median: median(nilai),
       modus: modus(nilai),
       standarDeviasi: stdDev(nilai)

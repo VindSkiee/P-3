@@ -21,6 +21,9 @@ export class SlotWaktu {
   durasi() {
     const ms = this.selesai.getTime() - this.mulai.getTime();
     const menit = Math.floor(ms / 1000 / 60);
+    if (menit < 0) {
+      return 0;
+    }
     return menit;
   }
 }
