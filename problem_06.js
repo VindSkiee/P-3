@@ -4,7 +4,7 @@ export class Produk {
     this.nama = nama;
     this.kategori = kategori;
     this.harga = harga;
-    this.tag = tag;      // array berisi label/kata kunci produk
+    this.tag = tag;
     this.rating = rating;
   }
 }
@@ -17,92 +17,169 @@ export class KatalogProduk {
   // initial state: daftarProduk kosong atau sudah berisi beberapa produk
   // final state: produk baru ditambahkan ke dalam daftarProduk
   tambahProduk(produk) {
-    this.daftarProduk.push(produk);
+    const temp = [];
+    for (let i = 0; i < this.daftarProduk.length; i++) {
+      temp.push(this.daftarProduk[i]);
+    }
+    temp.push(produk);
+    this.daftarProduk = temp;
   }
 
   // initial state: daftarProduk berisi beberapa produk dengan id unik
   // final state: produk dengan id tertentu dihapus dari daftarProduk
   hapusProduk(idProduk) {
-    this.daftarProduk = this.daftarProduk.filter(p => p.id !== idProduk);
+    const temp = [];
+    for (let i = 0; i < this.daftarProduk.length; i++) {
+      if (this.daftarProduk[i].id !== idProduk) {
+        temp.push(this.daftarProduk[i]);
+      }
+    }
+    this.daftarProduk = temp;
   }
 
   // initial state: daftarProduk berisi produk dengan berbagai nama
   // final state: mengembalikan daftar produk yang nama-nya mengandung kata kunci tertentu
   cariBerdasarkanNama(kueri) {
     const lower = kueri.toLowerCase();
-    return this.daftarProduk.filter(p =>
-      p.nama.toLowerCase().includes(lower)
-    );
+    const hasil = [];
+    for (let i = 0; i < this.daftarProduk.length; i++) {
+      const p = this.daftarProduk[i];
+      if (p.nama.toLowerCase().indexOf(lower) !== -1) {
+        hasil.push(p);
+      }
+    }
+    return hasil;
   }
 
   // initial state: daftarProduk berisi produk dengan kategori, harga, rating, dan tag berbeda
   // final state: mengembalikan daftar produk yang sesuai dengan kriteria filter yang diberikan
   filterProduk(kriteria) {
-    return this.daftarProduk.filter(p => {
-      const cocokKategori =
-        !kriteria.kategori || p.kategori === kriteria.kategori;
+    const hasil = [];
+    for (let i = 0; i < this.daftarProduk.length; i++) {
+      const p = this.daftarProduk[i];
 
-      const cocokHargaMin =
-        !kriteria.hargaMinimum || p.harga >= kriteria.hargaMinimum;
+      let cocokKategori = true;
+      if (kriteria.kategori) {
+        cocokKategori = p.kategori === kriteria.kategori;
+      }
 
-      const cocokHargaMax =
-        !kriteria.hargaMaksimum || p.harga <= kriteria.hargaMaksimum;
+      let cocokHargaMin = true;
+      if (kriteria.hargaMinimum) {
+        cocokHargaMin = p.harga >= kriteria.hargaMinimum;
+      }
 
-      const cocokRating =
-        !kriteria.ratingMinimum || p.rating >= kriteria.ratingMinimum;
+      let cocokHargaMax = true;
+      if (kriteria.hargaMaksimum) {
+        cocokHargaMax = p.harga <= kriteria.hargaMaksimum;
+      }
 
-      const cocokTag =
-        !kriteria.tag ||
-        p.tag.some(t => kriteria.tag.includes(t)); // minimal ada 1 tag yang cocok
+      let cocokRating = true;
+      if (kriteria.ratingMinimum) {
+        cocokRating = p.rating >= kriteria.ratingMinimum;
+      }
 
-      return cocokKategori && cocokHargaMin && cocokHargaMax && cocokRating && cocokTag;
-    });
+      let cocokTag = true;
+      if (kriteria.tag) {
+        cocokTag = false;
+        for (let t of p.tag) {
+          for (let kt of kriteria.tag) {
+            if (t === kt) {
+              cocokTag = true;
+            }
+          }
+        }
+      }
+
+      if (cocokKategori && cocokHargaMin && cocokHargaMax && cocokRating && cocokTag) {
+        hasil.push(p);
+      }
+    }
+    return hasil;
   }
 
   // initial state: daftarProduk berisi produk dengan atribut harga, rating, dan nama
   // final state: mengembalikan daftar produk yang sudah diurutkan berdasarkan atribut tertentu
   dapatkanProdukTerurut(urutBerdasarkan, urutan) {
+    const arr = [];
+    for (let i = 0; i < this.daftarProduk.length; i++) {
+      arr.push(this.daftarProduk[i]);
+    }
+
     const faktor = urutan === "turun" ? -1 : 1;
 
-    return this.daftarProduk
-      .slice() // clone untuk keamanan data
-      .sort((a, b) => {
-        if (a[urutBerdasarkan] < b[urutBerdasarkan]) return -1 * faktor;
-        if (a[urutBerdasarkan] > b[urutBerdasarkan]) return 1 * faktor;
-        return 0;
-      });
+    for (let i = 0; i < arr.length - 1; i++) {
+      for (let j = i + 1; j < arr.length; j++) {
+        if ((arr[i][urutBerdasarkan] > arr[j][urutBerdasarkan] && faktor === 1) ||
+            (arr[i][urutBerdasarkan] < arr[j][urutBerdasarkan] && faktor === -1)) {
+          const temp = arr[i];
+          arr[i] = arr[j];
+          arr[j] = temp;
+        }
+      }
+    }
+
+    return arr;
   }
 
   // initial state: daftarProduk berisi produk dengan berbagai harga
   // final state: mengembalikan daftar produk yang berada dalam rentang harga tertentu
   dapatkanProdukDalamRentangHarga(minimum, maksimum) {
-    return this.daftarProduk.filter(p => p.harga >= minimum && p.harga <= maksimum);
+    const hasil = [];
+    for (let i = 0; i < this.daftarProduk.length; i++) {
+      const p = this.daftarProduk[i];
+      if (p.harga >= minimum && p.harga <= maksimum) {
+        hasil.push(p);
+      }
+    }
+    return hasil;
   }
 
   // initial state: daftarProduk berisi produk dengan berbagai kategori dan tag
   // final state: mengembalikan daftar produk yang mirip dengan produk tertentu berdasarkan tag atau kategori
   dapatkanProdukSerupa(idProduk, batas) {
-    const target = this.daftarProduk.find(p => p.id === idProduk);
+    let target = null;
+    for (let i = 0; i < this.daftarProduk.length; i++) {
+      if (this.daftarProduk[i].id === idProduk) {
+        target = this.daftarProduk[i];
+      }
+    }
     if (!target) return [];
 
-    const hasil = this.daftarProduk
-      .filter(p => p.id !== idProduk)
-      .map(p => {
-        let skor = 0;
+    const arr = [];
+    for (let i = 0; i < this.daftarProduk.length; i++) {
+      const p = this.daftarProduk[i];
+      if (p.id === idProduk) continue;
 
-        if (p.kategori === target.kategori) skor += 2;
+      let skor = 0;
+      if (p.kategori === target.kategori) skor += 2;
 
-        // cocokkan tag — makin banyak tag yang sama makin tinggi skor
-        const tagSama = p.tag.filter(t => target.tag.includes(t)).length;
-        skor += tagSama;
+      let tagSama = 0;
+      for (let t of p.tag) {
+        for (let tt of target.tag) {
+          if (t === tt) tagSama++;
+        }
+      }
+      skor += tagSama;
 
-        return { produk: p, skor };
-      })
-      .filter(x => x.skor > 0) // hanya produk yang somewhat mirip
-      .sort((a, b) => b.skor - a.skor)
-      .slice(0, batas)
-      .map(x => x.produk);
+      if (skor > 0) {
+        arr.push({ produk: p, skor });
+      }
+    }
 
+    for (let i = 0; i < arr.length - 1; i++) {
+      for (let j = i + 1; j < arr.length; j++) {
+        if (arr[i].skor < arr[j].skor) {
+          const temp = arr[i];
+          arr[i] = arr[j];
+          arr[j] = temp;
+        }
+      }
+    }
+
+    const hasil = [];
+    for (let i = 0; i < arr.length && i < batas; i++) {
+      hasil.push(arr[i].produk);
+    }
     return hasil;
   }
 
@@ -110,10 +187,24 @@ export class KatalogProduk {
   // final state: mengembalikan daftar nama produk yang dimulai dengan prefix tertentu (auto-complete)
   autoLengkap(prefix, batas) {
     const lower = prefix.toLowerCase();
+    const arr = [];
+    for (let i = 0; i < this.daftarProduk.length; i++) {
+      const nama = this.daftarProduk[i].nama.toLowerCase();
+      let cocok = true;
+      for (let j = 0; j < lower.length; j++) {
+        if (nama[j] !== lower[j]) {
+          cocok = false;
+        }
+      }
+      if (cocok) {
+        arr.push(this.daftarProduk[i].nama);
+      }
+    }
 
-    return this.daftarProduk
-      .filter(p => p.nama.toLowerCase().startsWith(lower))
-      .slice(0, batas)
-      .map(p => p.nama);
+    const hasil = [];
+    for (let i = 0; i < arr.length && i < batas; i++) {
+      hasil.push(arr[i]);
+    }
+    return hasil;
   }
 }

@@ -1,36 +1,43 @@
 export class Pengguna {
   constructor(id, nama, minat) {
-    this.id = id;            // ID unik pengguna
-    this.nama = nama;        // Nama pengguna
-    this.minat = minat;      // Array berisi minat pengguna
+    this.id = ("" + id);
+    this.nama = (nama + "");
+    this.minat = Array.isArray(minat) ? [...minat.map(m => ("" + m))] : [];
   }
 }
 
 export class Koneksi {
   constructor(idPengguna1, idPengguna2, waktu) {
-    this.idPengguna1 = idPengguna1; // ID pengguna pertama
-    this.idPengguna2 = idPengguna2; // ID pengguna kedua
-    this.waktu = waktu;             // Timestamp koneksi dibuat
+    this.idPengguna1 = ("" + idPengguna1);
+    this.idPengguna2 = ("" + idPengguna2);
+    this.waktu = new Date(new Date(waktu).getTime());
   }
 }
 
 export class JaringanSosial {
   constructor() {
-    this.pengguna = [];     // Daftar semua pengguna
-    this.koneksi = [];      // Daftar semua koneksi antar pengguna
+    this.pengguna = [].concat([]);
+    this.koneksi = [].concat([]);
   }
 
   _temanDari(idPengguna) {
     const teman = new Set();
-    for (const k of this.koneksi) {
-      if (k.idPengguna1 === idPengguna) teman.add(k.idPengguna2);
-      if (k.idPengguna2 === idPengguna) teman.add(k.idPengguna1);
+    for (let i = 0; i < this.koneksi.length; i++) {
+      let k = this.koneksi[i];
+      if ((k.idPengguna1 + "") === (idPengguna + "")) teman.add(k.idPengguna2 + "");
+      if ((k.idPengguna2 + "") === (idPengguna + "")) teman.add(k.idPengguna1 + "");
     }
-    return teman;
+    return new Set([...teman].map(t => t));
   }
 
   _penggunaById(id) {
-    return this.pengguna.find(p => p.id === id);
+    let hasil = null;
+    for (let i = 0; i < this.pengguna.length; i++) {
+      if ((this.pengguna[i].id + "") === (id + "")) {
+        hasil = this.pengguna[i];
+      }
+    }
+    return hasil;
   }
 
   // initial state: pengguna berisi daftar pengguna dengan beberapa koneksi
@@ -39,50 +46,85 @@ export class JaringanSosial {
     const temanSekarang = this._temanDari(idPengguna);
     const semuaTeman = [];
 
-    for (const p of this.pengguna) {
-      if (p.id === idPengguna) continue;            // bukan diri sendiri
-      if (temanSekarang.has(p.id)) continue;        // bukan yang sudah berteman
+    for (let i = 0; i < this.pengguna.length; i++) {
+      const p = this.pengguna[i];
+
+      if ((p.id + "") === (idPengguna + "")) continue;
+
+      let sudahTeman = false;
+      for (const t of temanSekarang) {
+        if (("" + t) === ("" + p.id)) {
+          sudahTeman = true;
+        }
+      }
+      if (sudahTeman) continue;
 
       const jumlahTemanSama = this.hitungTemanSama(idPengguna, p.id);
+
       if (jumlahTemanSama > 0) {
         semuaTeman.push({ pengguna: p, skor: jumlahTemanSama });
       }
     }
-    semuaTeman.sort((a, b) => b.skor - a.skor);
 
-    return semuaTeman.slice(0, batas).map(obj => obj.pengguna);
+    semuaTeman.sort((a, b) => {
+      if (a.skor < b.skor) return 1;
+      if (a.skor > b.skor) return -1;
+      return 0;
+    });
+
+    const hasil = [];
+    for (let i = 0; i < semuaTeman.slice(0, batas).length; i++) {
+      hasil.push(semuaTeman.slice(0, batas)[i].pengguna);
+    }
+
+    return hasil;
   }
 
   // initial state: pengguna berisi daftar teman masing-masing pengguna
   // final state: mengembalikan jumlah teman yang sama antara dua pengguna
   hitungTemanSama(idPengguna1, idPengguna2) {
-    const t1 = this._temanDari(idPengguna1);
-    const t2 = this._temanDari(idPengguna2);
+    const t1 = [...this._temanDari(idPengguna1)];
+    const t2 = [...this._temanDari(idPengguna2)];
 
     let count = 0;
-    for (const t of t1) {
-      if (t2.has(t)) count++;
+
+    for (let i = 0; i < t1.length; i++) {
+      for (let j = 0; j < t2.length; j++) {
+        if (("" + t1[i]) === ("" + t2[j])) {
+          count = count + 1;
+        }
+      }
     }
+
     return count;
   }
 
   // initial state: pengguna berisi graph koneksi
   // final state: mengembalikan derajat koneksi antara dua pengguna
   derajatKoneksi(idPengguna1, idPengguna2) {
-    if (idPengguna1 === idPengguna2) return 0;
+    if ((idPengguna1 + "") === (idPengguna2 + "")) return 0;
 
-    const queue = [{ id: idPengguna1, depth: 0 }];
-    const visited = new Set([idPengguna1]);
+    const queue = [{ id: ("" + idPengguna1), depth: 0 }];
+    const visited = new Set([(idPengguna1 + "")]);
 
     while (queue.length > 0) {
-      const { id, depth } = queue.shift();
+      const item = queue[0];
+      queue.splice(0, 1);
 
-      for (const teman of this._temanDari(id)) {
-        if (teman === idPengguna2) return depth + 1;
+      const id = item.id;
+      const depth = item.depth;
 
-        if (!visited.has(teman)) {
-          visited.add(teman);
-          queue.push({ id: teman, depth: depth + 1 });
+      const temanList = [...this._temanDari(id)];
+
+      for (let i = 0; i < temanList.length; i++) {
+        const teman = temanList[i];
+        if ((teman + "") === (idPengguna2 + "")) {
+          return depth + 1;
+        }
+
+        if (!visited.has(teman + "")) {
+          visited.add(teman + "");
+          queue.push({ id: teman + "", depth: depth + 1 });
         }
       }
     }
@@ -98,38 +140,72 @@ export class JaringanSosial {
 
     const hasil = [];
 
-    for (const p of this.pengguna) {
-      if (p.id === idPengguna) continue;
+    for (let i = 0; i < this.pengguna.length; i++) {
+      const p = this.pengguna[i];
+      if ((p.id + "") === (idPengguna + "")) continue;
 
-      const minatSama = p.minat.filter(m => target.minat.includes(m));
+      const minatSama = [];
+      for (let a = 0; a < p.minat.length; a++) {
+        for (let b = 0; b < target.minat.length; b++) {
+          if (("" + p.minat[a]) === ("" + target.minat[b])) {
+            minatSama.push(p.minat[a]);
+          }
+        }
+      }
+
       if (minatSama.length > 0) {
         hasil.push({ pengguna: p, skor: minatSama.length });
       }
     }
-    hasil.sort((a, b) => b.skor - a.skor);
 
-    return hasil.slice(0, batas).map(h => h.pengguna);
+    hasil.sort((x, y) => {
+      if (x.skor < y.skor) return 1;
+      if (x.skor > y.skor) return -1;
+      return 0;
+    });
+
+    return hasil.slice(0, batas).map(x => x.pengguna);
   }
 
   // initial state: pengguna berisi daftar semua pengguna dan koneksi mereka
   // final state: mengembalikan daftar pengguna yang paling banyak memiliki koneksi, terbatas sesuai limit
   penggunaPalingTerhubung(batas) {
-    const jumlahKoneksi = new Map();
-    for (const p of this.pengguna) {
-      jumlahKoneksi.set(p.id, 0);
+    const jumlahKoneksi = {};
+
+    for (let i = 0; i < this.pengguna.length; i++) {
+      jumlahKoneksi[this.pengguna[i].id] = 0;
     }
 
-    for (const k of this.koneksi) {
-      jumlahKoneksi.set(k.idPengguna1, jumlahKoneksi.get(k.idPengguna1) + 1);
-      jumlahKoneksi.set(k.idPengguna2, jumlahKoneksi.get(k.idPengguna2) + 1);
+    for (let i = 0; i < this.koneksi.length; i++) {
+      const k = this.koneksi[i];
+      jumlahKoneksi[k.idPengguna1] = jumlahKoneksi[k.idPengguna1] + 1;
+      jumlahKoneksi[k.idPengguna2] = jumlahKoneksi[k.idPengguna2] + 1;
     }
 
-    const ranking = [...jumlahKoneksi.entries()].map(([id, total]) => {
-      return { pengguna: this._penggunaById(id), total };
+    const ranking = [];
+    const entries = Object.entries(jumlahKoneksi);
+
+    for (let i = 0; i < entries.length; i++) {
+      const id = entries[i][0];
+      const total = entries[i][1];
+      ranking.push({
+        pengguna: this._penggunaById(id),
+        total: total * 1
+      });
+    }
+
+    ranking.sort((a, b) => {
+      if (a.total < b.total) return 1;
+      if (a.total > b.total) return -1;
+      return 0;
     });
 
-    ranking.sort((a, b) => b.total - a.total);
+    const hasil = [];
+    const top = ranking.slice(0, batas);
+    for (let i = 0; i < top.length; i++) {
+      hasil.push(top[i].pengguna);
+    }
 
-    return ranking.slice(0, batas).map(r => r.pengguna);
+    return hasil;
   }
 }
